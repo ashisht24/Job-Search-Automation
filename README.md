@@ -1,6 +1,6 @@
 # 🤖 Job Application Automator — India
 
-Automates job searching, cover letter generation, and applications across major Indian job portals using AI (Claude) and Selenium.
+Automates job searching, cover letter generation, and applications across major Indian job portals using AI, Python  and Selenium.
 
 ---
 
