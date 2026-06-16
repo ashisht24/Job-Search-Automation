@@ -2,154 +2,555 @@
 
 Automates job searching, cover letter generation, and applications across major Indian job portals using AI, Python  and Selenium.
 
+The tool continuously searches for new opportunities, evaluates relevance against your CV, generates tailored cover letters using Groq AI, attempts automated applications using Selenium, and maintains a live dashboard of all job activity.
+
 ---
 
-## 🗂️ Files
+# Table of Contents
 
+1. Overview
+2. Features
+3. Architecture
+4. Supported Portals
+5. Installation
+6. Configuration
+7. Credentials Setup
+8. Usage Examples
+9. Command Line Arguments
+10. Continuous Monitoring Mode
+11. Relevance Scoring
+12. Cover Letter Generation
+13. Output Files
+14. Dashboard
+15. Logging
+16. Limitations
+17. Extending the Tool
+18. Security Recommendations
+19. Disclaimer
+
+---
+
+# Overview
+
+The application performs the following workflow:
+
+1. Read CV PDF
+2. Extract text using PDF parsers
+3. Build a structured candidate profile using Groq AI
+4. Search jobs across multiple portals
+5. Remove duplicate jobs
+6. Score relevance against your profile
+7. Generate personalized cover letters
+8. Attempt automated applications
+9. Generate reports and dashboard
+10. Repeat continuously at configurable intervals
+
+---
+
+# Features
+
+## Intelligent CV Parsing
+
+Extracts:
+
+- Name
+- Email
+- Phone Number
+- Skills
+- Experience
+- Current Role
+- Education
+- Professional Summary
+
+PDF extraction pipeline:
+
+1. pdfplumber (primary)
+2. pypdf (fallback)
+
+## Multi-Portal Job Search
+
+Searches multiple Indian job boards simultaneously.
+
+## AI-Based Candidate Matching
+
+Automatically ranks jobs according to:
+
+- Role match
+- Skill match
+- Resume relevance
+
+## Automated Cover Letters
+
+Generates custom cover letters for every relevant opportunity.
+
+## Selenium Automation
+
+Supports automated application workflows where possible.
+
+## Duplicate Detection
+
+Previously seen jobs are tracked across runs.
+
+## Interactive Dashboard
+
+Generates a live HTML dashboard for monitoring applications.
+
+---
+
+# Architecture
+
+```text
+CV PDF
+   │
+   ▼
+CV Reader
+   │
+   ▼
+Groq Resume Parser
+   │
+   ▼
+Structured Candidate Profile
+   │
+   ▼
+Portal Searchers
+   │
+   ▼
+Job Collection
+   │
+   ▼
+Duplicate Filtering
+   │
+   ▼
+Relevance Scoring
+   │
+   ▼
+Cover Letter Generation
+   │
+   ▼
+Application Engine
+   │
+   ▼
+Reporting + Dashboard
 ```
-job_apply/
-├── job_automator.py      # Main script
-├── credentials.json      # Your login credentials (never commit this!)
-├── .env                  # API keys
-├── requirements.txt      # Python dependencies
-└── output/               # Generated reports & cover letters (auto-created)
+
+---
+
+# Supported Portals
+
+| Portal | Search | Auto Apply |
+|----------|----------|----------|
+| Naukri | ✅ | ✅ |
+| LinkedIn | ✅ | ✅ Easy Apply |
+| Indeed India | ✅ | ✅ Partial |
+| Shine | ✅ | ✅ Partial |
+| Monster India | ✅ | ⚠️ Manual |
+| Instahyre | ✅ | ⚠️ Manual |
+
+---
+
+# Installation
+
+## Create Virtual Environment
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
 ```
 
----
+### Linux/macOS
 
-## ✅ Supported Portals
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-| Portal | Search | Auto-Apply |
-|---|---|---|
-| **Naukri.com** | ✅ | ✅ (login required) |
-| **LinkedIn** | ✅ | ✅ Easy Apply |
-| **Indeed India** | ✅ | ✅ (partial) |
-| **Shine.com** | ✅ | ✅ (login required) |
-| **Monster India** | ✅ | ⚠️ Opens page |
-| **Instahyre** | ✅ (URL) | ⚠️ Opens page |
+## Install Dependencies
 
-> ⚠️ Auto-apply may break as portals update their HTML. The script opens the browser visibly so you can intervene.
+```bash
+pip install selenium webdriver-manager pypdf pdfplumber groq python-dotenv requests beautifulsoup4
+```
 
----
+or
 
-## 🚀 Setup
-
-### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set your Anthropic API key
-Edit `.env`:
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-Get your key at https://console.anthropic.com
+---
 
-### 3. Add your login credentials
-Edit `credentials.json` with your portal logins.
+# Configuration
+
+Create a `.env` file:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Obtain your key from:
+
+https://console.groq.com
+
+Model used by the application:
+
+```text
+llama-3.3-70b-versatile
+```
 
 ---
 
-## 💻 Usage
+# Credentials Setup
 
-### Dry run (search + cover letters, browser opens but doesn't submit)
+Create:
+
+```json
+{
+  "linkedin": {
+    "email": "your_email@example.com",
+    "password": "your_password"
+  },
+  "naukri": {
+    "email": "your_email@example.com",
+    "password": "your_password"
+  },
+  "indeed": {
+    "email": "your_email@example.com",
+    "password": "your_password"
+  },
+  "shine": {
+    "email": "your_email@example.com",
+    "password": "your_password"
+  }
+}
+```
+
+Save as:
+
+```text
+credentials.json
+```
+
+---
+
+# Usage Examples
+
+## Basic Search
+
 ```bash
 python job_automator.py \
-  --cv /path/to/your_cv.pdf \
+  --cv resume.pdf \
   --role "Data Scientist" \
   --location "Bangalore"
 ```
 
-### Search specific portals only
+## Search Specific Portals
+
 ```bash
 python job_automator.py \
-  --cv cv.pdf \
+  --cv resume.pdf \
   --role "Software Engineer" \
   --location "Mumbai" \
-  --portals naukri linkedin indeed
+  --portals linkedin naukri indeed
 ```
 
-### Actually apply (Selenium submits)
-```bash
-python job_automator.py \
-  --cv cv.pdf \
-  --role "Product Manager" \
-  --location "Hyderabad" \
-  --apply
-```
+## Increase Job Volume
 
-### Skip apply step (just search + cover letters)
 ```bash
 python job_automator.py \
-  --cv cv.pdf \
+  --cv resume.pdf \
   --role "ML Engineer" \
-  --location "Pune" \
+  --max-jobs 25
+```
+
+## Adjust Relevance Threshold
+
+```bash
+python job_automator.py \
+  --cv resume.pdf \
+  --role "Backend Engineer" \
+  --min-score 0.6
+```
+
+## Cover Letters Only
+
+```bash
+python job_automator.py \
+  --cv resume.pdf \
+  --role "Data Analyst" \
   --skip-apply
 ```
 
-### Run headless (no visible browser window)
+## Actual Application Mode
+
 ```bash
-python job_automator.py --cv cv.pdf --role "DevOps Engineer" --apply --headless
+python job_automator.py \
+  --cv resume.pdf \
+  --role "Product Manager" \
+  --apply
+```
+
+## Headless Mode
+
+```bash
+python job_automator.py \
+  --cv resume.pdf \
+  --role "DevOps Engineer" \
+  --apply \
+  --headless
+```
+
+## Run Every 10 Minutes
+
+```bash
+python job_automator.py \
+  --cv resume.pdf \
+  --role "AI Engineer" \
+  --interval 10
 ```
 
 ---
 
-## ⚙️ All Options
+# Command Line Arguments
 
-| Flag | Default | Description |
-|---|---|---|
-| `--cv` | required | Path to your PDF CV |
-| `--role` | required | Target job title |
-| `--location` | Bangalore | Preferred city |
-| `--portals` | all 6 | Space-separated portal names |
-| `--max-jobs` | 10 | Max jobs to fetch per portal |
-| `--min-score` | 0.4 | Relevance threshold (0.0–1.0) |
-| `--apply` | False | Submit applications (default is dry-run) |
-| `--headless` | False | Hide browser window |
-| `--skip-apply` | False | Only search + generate cover letters |
-| `--creds` | credentials.json | Path to credentials file |
+| Argument | Required | Default | Description |
+|----------|----------|----------|----------|
+| --cv | Yes | - | CV PDF |
+| --role | Yes | - | Target role |
+| --location | No | Bangalore | Preferred location |
+| --portals | No | All | Portals to search |
+| --max-jobs | No | 10 | Jobs per portal |
+| --min-score | No | 0.4 | Relevance threshold |
+| --apply | No | False | Enable application mode |
+| --headless | No | False | Run browser headless |
+| --skip-apply | No | False | Skip application phase |
+| --creds | No | credentials.json | Credentials file |
+| --interval | No | 30 | Minutes between scans |
 
 ---
 
-## 📁 Output
+# Continuous Monitoring Mode
 
-After each run, an `output/` folder is created with:
+The application runs forever until stopped.
 
+Per cycle:
+
+1. Search jobs
+2. Remove duplicates
+3. Score jobs
+4. Generate cover letters
+5. Apply if enabled
+6. Update dashboard
+7. Sleep
+8. Repeat
+
+Stop using:
+
+```text
+Ctrl + C
 ```
-output/
-├── report_20240615_143020.md          # Human-readable summary
-├── jobs_20240615_143020.json          # Machine-readable job data
-└── cover_letters_20240615_143020/
-    ├── Google_Software_Engineer.txt
-    ├── Flipkart_Data_Scientist.txt
-    └── ...
+
+---
+
+# Relevance Scoring
+
+Current scoring includes:
+
+### Title Match
+
+Strong weighting when target role appears in job title.
+
+### Skill Match
+
+Matches CV skills against available job content.
+
+### Combined Score
+
+Final score range:
+
+```text
+0.0 - 1.0
+```
+
+Default threshold:
+
+```text
+0.4
 ```
 
 ---
 
-## ⚠️ Important Notes
+# Cover Letter Generation
 
-1. **Portals actively block automation.** LinkedIn and Naukri especially add CAPTCHAs and bot detection. Run without `--headless` so you can solve them manually.
+Groq AI receives:
 
-2. **Easy Apply on LinkedIn works best** — it's officially designed for quick applications and is more automation-friendly.
+- Candidate information
+- Experience
+- Education
+- Skills
+- Job title
+- Company
+- Description
 
-3. **Terms of Service** — automated scraping may violate some portals' ToS. Use responsibly and throttle requests (the script adds random delays automatically).
+Generated cover letters:
 
-4. **Keep `credentials.json` private** — add it to `.gitignore` if using git.
-
-5. **Scanned CVs won't work** — your PDF must have a text layer. If it's scanned, use Adobe Acrobat or an OCR tool first.
+- Professional
+- Concise
+- Personalized
+- Under 300 words
 
 ---
 
-## 🔧 Extending
+# Output Files
 
-To add a new portal, create a class following this pattern:
+Project structure:
+
+```text
+job_apply/
+├── job_automator.py
+├── credentials.json
+├── .env
+├── requirements.txt
+├── job_automator.log
+└── output/
+```
+
+## Timestamped Job Archives
+
+```text
+output/jobs_YYYYMMDD_HHMMSS.json
+```
+
+Contains:
+
+- Job details
+- Relevance score
+- Cover letter
+- Application status
+
+## Rolling Job Database
+
+```text
+output/all_jobs.json
+```
+
+Maintains every discovered job across all cycles.
+
+## Seen Job Registry
+
+```text
+output/seen_jobs.json
+```
+
+Prevents duplicate processing.
+
+## Cover Letter Repository
+
+```text
+output/cover_letters_YYYYMMDD_HHMMSS/
+```
+
+Contains one text file per generated cover letter.
+
+---
+
+# Dashboard
+
+Generated automatically:
+
+```text
+output/dashboard.html
+```
+
+Features:
+
+- Total jobs
+- Applied jobs
+- Pending jobs
+- Portal statistics
+- Application status
+- Cover letter viewer
+- Job links
+- Notes and errors
+
+Open directly in your browser.
+
+---
+
+# Logging
+
+Logs are written to:
+
+```text
+job_automator.log
+```
+
+Tracks:
+
+- CV parsing
+- Searches
+- Relevance scoring
+- Cover letter generation
+- Applications
+- Dashboard updates
+- Errors
+
+---
+
+# Limitations
+
+- Job portals may change HTML structures.
+- CAPTCHA challenges may require manual intervention.
+- Some portals actively block automation.
+- Scanned PDFs without OCR are not supported.
+- Auto-apply success depends on portal-specific workflows.
+
+---
+
+# Extending the Tool
+
+Create a scraper:
 
 ```python
 class NewPortalScraper:
-    def search(self, role: str, location: str, max_jobs: int) -> list[JobListing]:
-        ...
+    def search(self, role, location, max_jobs=10):
+        pass
 ```
 
-Then register it in `JobAutomator.PORTALS`.
+Register:
+
+```python
+PORTALS = {
+    "newportal": NewPortalScraper
+}
+```
+
+Then use:
+
+```bash
+python job_automator.py --portals newportal
+```
+
+---
+
+# Security Recommendations
+
+- Never commit credentials.json
+- Add credentials.json to .gitignore
+- Protect your .env file
+- Use dedicated portal accounts where possible
+- Review generated applications before submission
+
+---
+
+# Disclaimer
+
+This project is intended for educational and personal productivity purposes.
+
+Users are responsible for complying with:
+
+- Job portal Terms of Service
+- Local laws
+- Employer application policies
+
+Use responsibly and verify all generated applications before submission.
